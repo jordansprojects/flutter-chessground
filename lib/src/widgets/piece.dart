@@ -1,3 +1,4 @@
+import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart' show Piece;
 import 'package:flutter/widgets.dart';
 import '../models.dart';
@@ -27,11 +28,14 @@ class PieceWidget extends StatelessWidget {
   /// Pieces are hidden in blindfold mode.
   final bool blindfoldMode;
 
-  /// If `true` the piece is displayed fliped on Y axis.
+  /// If `true` the piece is displayed flipped on Y axis.
   final bool upsideDown;
 
   /// This value is used to animate the opacity of the piece.
   final Animation<double>? opacity;
+
+  /// If 'true' piece height and width is different than the square's size
+  bool get is3d => pieceAssets.is3d;
 
   /// [AssetImage] provider for the piece.
   AssetImage get imageProvider => pieceAssets[piece.kind]!;
@@ -44,16 +48,36 @@ class PieceWidget extends StatelessWidget {
 
     final fromCache = ChessgroundImages.instance.get(imageProvider);
 
-    final image =
-        fromCache != null
-            ? RawImage(
-              image: fromCache,
-              debugImageLabel: 'PieceWidgetCache(${imageProvider.assetName})',
-              width: size,
-              height: size,
-              opacity: opacity,
-            )
-            : Image(image: imageProvider, width: size, height: size, opacity: opacity);
+    double imageOffsetDy = 0;
+    double imageOffsetDx = 0;
+    double? imageWidth = size;
+    double imageHeight = size;
+
+    if (is3d) {
+      imageOffsetDy = -50;
+      imageOffsetDx = -15;
+      imageHeight = size*1.8;
+      imageWidth = null;
+    }
+
+    final image = Transform.translate(
+      offset: Offset(imageOffsetDx, imageOffsetDy),
+      child:
+          fromCache != null
+              ? RawImage(
+                image: fromCache,
+                debugImageLabel: 'PieceWidgetCache(${imageProvider.assetName})',
+                width: imageWidth,
+                height: imageHeight,
+                opacity: opacity,
+              )
+              : Image(
+                image: imageProvider,
+                width: imageWidth,
+                height: imageHeight,
+                opacity: opacity,
+              ),
+    );
 
     return upsideDown ? Transform.flip(flipY: true, child: image) : image;
   }

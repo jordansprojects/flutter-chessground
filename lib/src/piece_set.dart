@@ -703,13 +703,20 @@ enum PieceSet {
 }
 
 
+// Define 3D sets in one place
+const threeDimensionalPieceSets = {
+  PieceSet.experimental,
+
+};
+
+
 extension PieceSet3DExtension on PieceSet {
-  bool get is3d {
-    switch (this) {
-      case PieceSet.experimental:
-        return true;
-      default:
-        return false;
-    }
-  }
+  bool get is3d => threeDimensionalPieceSets.contains(this);
 }
+
+extension PieceAsset3DExtension on PieceAssets {
+  bool get is3d => threeDimensionalPieceSets.any((set) => identical(set.assets, this));
+}
+
+
+
