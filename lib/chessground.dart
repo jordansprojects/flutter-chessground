@@ -4,7 +4,6 @@ export 'src/board_settings.dart';
 export 'src/fen.dart';
 export 'src/models.dart';
 export 'src/piece_set.dart';
-export 'src/piece_set_3d.dart';
 export 'src/images.dart';
 export 'src/premove.dart';
 export 'src/widgets/board.dart';

@@ -228,6 +228,7 @@ class PiecesPainter extends CustomPainter {
     required this.piecesNotifier,
     required this.translatingPiecesNotifier,
     required this.pieceAssets,
+    required this.enable3dAssets,
     required this.squareSize,
     required this.orientation,
     required ValueNotifier<Square?>? draggedPieceSquareNotifier,
@@ -262,6 +263,9 @@ class PiecesPainter extends CustomPainter {
 
   /// The assets used to render each piece kind.
   final PieceAssets pieceAssets;
+
+  /// Scale piece images based on usage of 3d piece and board assets
+  final bool enable3dAssets;
 
   /// The size of a single square in logical pixels.
   final double squareSize;
@@ -298,6 +302,7 @@ class PiecesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (blindfoldMode) return;
 
+	
     final game = gameNotifier.value;
     final pieces = piecesNotifier.value;
     final translatingPieces = translatingPiecesNotifier.value;
@@ -305,7 +310,22 @@ class PiecesPainter extends CustomPainter {
     final promotionMoveFrom = pendingPromotionNotifier.value?.from;
     final sideToMove = game?.sideToMove;
     final paint = Paint()..filterQuality = FilterQuality.medium;
-    for (final entry in pieces.entries) {
+
+
+
+    final piecesToPaint = ( enable3dAssets == false) ? pieces.entries : (orientation == Side.white) ? (pieces.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) : 
+	(pieces.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+
+
+    if(enable3dAssets){
+    debugPrint("3d assets enabled");  
+     
+//     pieces.entries = (orientation == Side.white) ? (pieces.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) : 
+//	(pieces.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+     }
+     
+  
+    for (final entry in piecesToPaint ) {
       final square = entry.key;
       if (translatingPieces.containsKey(square) ||
           square == draggedPieceSquare ||
@@ -317,7 +337,10 @@ class PiecesPainter extends CustomPainter {
       final image = ChessgroundImages.instance.get(asset);
       if (image == null) continue;
 
-      final dst = _squareRect(square, squareSize, orientation);
+      
+       final dst = (enable3dAssets) ?  _oblongRect(square,squareSize,orientation, image.width.toDouble(), image.height.toDouble()) : _squareRect(square, squareSize, orientation);
+
+
       final src = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
       if (_isUpsideDown(
         entry.value.color,
@@ -348,6 +371,8 @@ class PiecesPainter extends CustomPainter {
   }
 }
 
+
+
 /// Paints all fading-out pieces for the current animation frame.
 ///
 /// Driven by [animation] as the repaint listenable — only [paint] runs per
@@ -359,6 +384,7 @@ class FadingPiecesPainter extends CustomPainter {
     required this.squareSize,
     required this.orientation,
     required this.pieceAssets,
+    required this.enable3dAssets,
     required this.blindfoldMode,
     required this.pieceOrientationBehavior,
     required this.gameNotifier,
@@ -380,6 +406,10 @@ class FadingPiecesPainter extends CustomPainter {
 
   /// The assets used to render each piece kind.
   final PieceAssets pieceAssets;
+
+  // Scale piece images based on whether 3d piece or board assets are used
+  // to give the illusion of 3d board and pieces
+  final bool enable3dAssets;
 
   /// Whether pieces should be hidden (blindfold mode).
   final bool blindfoldMode;
@@ -455,6 +485,7 @@ class TranslatingPiecesPainter extends CustomPainter {
     required this.squareSize,
     required this.orientation,
     required this.pieceAssets,
+    required this.enable3dAssets,
     required this.blindfoldMode,
     required this.pieceOrientationBehavior,
     required this.gameNotifier,
@@ -476,6 +507,9 @@ class TranslatingPiecesPainter extends CustomPainter {
 
   /// The assets used to render each piece kind.
   final PieceAssets pieceAssets;
+
+  //TODO put description here
+  final bool enable3dAssets;
 
   /// Whether pieces should be hidden (blindfold mode).
   final bool blindfoldMode;
@@ -660,6 +694,25 @@ Rect _squareRect(Square square, double squareSize, Side orientation) {
   return Rect.fromLTWH(x * squareSize, y * squareSize, squareSize, squareSize);
 }
 
+Rect _oblongRect(Square square, double squareSize, Side orientation, double imageWidth, double imageHeight){
+
+	final x = orientation == Side.black ? 7 - square.file : square.file;
+  	final y = orientation == Side.black ? square.rank : 7 - square.rank;
+
+	final scaleFactor = 1.4; 	
+	final width  = squareSize*scaleFactor;
+	final height = (width/imageWidth) * imageHeight;	
+
+	final yOffset = (squareSize - height) / scaleFactor; 
+	final xOffset = (squareSize - width) / scaleFactor;
+	
+	final double left = x * squareSize + (squareSize - width ) / 2;
+	final double top = (y + 1 ) * squareSize - height;
+
+  	return Rect.fromLTWH(left,top , width, height);
+}
+
+
 bool _isUpsideDown(
   Side pieceColor, {
   required PieceOrientationBehavior behavior,
@@ -670,3 +723,5 @@ bool _isUpsideDown(
   PieceOrientationBehavior.opponentUpsideDown => pieceColor == orientation.opposite,
   PieceOrientationBehavior.sideToPlay => sideToMove == orientation.opposite,
 };
+
+
