@@ -624,6 +624,163 @@ void main() {
       });
     });
 
+    testWidgets('while a finger stays down, subsequent pointer downs keep cancelling gestures', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const _TestApp(initialPlayerSide: PlayerSide.both));
+      await TestAsyncUtils.guard<void>(() async {
+        // finger 1 goes down and selects e2; it stays down for the whole test
+        final finger1 = await tester.startGesture(squareOffset(tester, Square.e2));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+
+        // finger 2 goes down: it cancels the current selection
+        final finger2 = await tester.startGesture(squareOffset(tester, Square.e4));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+        await finger2.up();
+        await tester.pump();
+
+        // a second pointer-down attempt while finger 1 is still down must also
+        // be ignored (does not select the piece)
+        final finger3 = await tester.startGesture(squareOffset(tester, Square.e2));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+        await finger3.up();
+        await tester.pump();
+
+        // finger 1 finally releases: the board can be interacted with again
+        await finger1.up();
+        await tester.pump();
+        await tester.tapAt(squareOffset(tester, Square.e2));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+      });
+    });
+
+    testWidgets('while a finger stays down on an empty square, other pointer gestures are no-op', (
+      WidgetTester tester,
+    ) async {
+      // Draw shapes are disabled here: when enabled, holding an empty square
+      // enters draw mode and a second finger would draw a shape, short-circuiting
+      // before the play-gesture lock (_currentPointerDownEvent) is consulted. We
+      // disable it so this test actually exercises that lock.
+      await tester.pumpWidget(
+        const _TestApp(initialPlayerSide: PlayerSide.both, settings: ChessboardSettings()),
+      );
+      await TestAsyncUtils.guard<void>(() async {
+        // finger 1 goes down on an empty square (e4) and stays down
+        final finger1 = await tester.startGesture(squareOffset(tester, Square.e4));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e4), isFalse);
+
+        // finger 2 tries to select a piece: must be a no-op
+        final finger2 = await tester.startGesture(squareOffset(tester, Square.e2));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+        await finger2.up();
+        await tester.pump();
+
+        // a second pointer-down attempt while finger 1 is still down must also
+        // be ignored
+        final finger3 = await tester.startGesture(squareOffset(tester, Square.e2));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+        await finger3.up();
+        await tester.pump();
+
+        // finger 1 finally releases: the board can be interacted with again
+        await finger1.up();
+        await tester.pump();
+        await tester.tapAt(squareOffset(tester, Square.e2));
+        await tester.pump();
+        expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+      });
+    });
+
+    testWidgets(
+      'a leftover finger blocks gestures even after the first finger that owned the gesture lifts',
+      (WidgetTester tester) async {
+        // Draw shapes disabled so all fingers stay on the play-gesture path
+        // (see the empty-square test above for why).
+        await tester.pumpWidget(
+          const _TestApp(initialPlayerSide: PlayerSide.both, settings: ChessboardSettings()),
+        );
+        await TestAsyncUtils.guard<void>(() async {
+          // finger 1 goes down and selects e2 (it owns the gesture)
+          final finger1 = await tester.startGesture(squareOffset(tester, Square.e2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+
+          // finger 2 goes down on another piece: it cancels the selection and
+          // stays down
+          final finger2 = await tester.startGesture(squareOffset(tester, Square.d2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+
+          // the gesture owner (finger 1) lifts, but finger 2 is still down
+          await finger1.up();
+          await tester.pump();
+
+          // a fresh finger 3 must still be ignored, because a finger remains
+          // down on the board
+          final finger3 = await tester.startGesture(squareOffset(tester, Square.e2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+
+          await finger3.up();
+          await finger2.up();
+          await tester.pump();
+
+          // all fingers released: the board can be interacted with again
+          await tester.tapAt(squareOffset(tester, Square.e2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+        });
+      },
+    );
+
+    testWidgets(
+      'a leftover finger blocks gestures even after the owner lifts, with draw mode enabled',
+      (WidgetTester tester) async {
+        // Draw shapes enabled (the default): all fingers land on pieces so none
+        // of them enters draw mode (which is triggered by holding an empty
+        // square), keeping every finger on the play-gesture path.
+        await tester.pumpWidget(const _TestApp(initialPlayerSide: PlayerSide.both));
+        await TestAsyncUtils.guard<void>(() async {
+          // finger 1 goes down on a piece and selects e2 (it owns the gesture)
+          final finger1 = await tester.startGesture(squareOffset(tester, Square.e2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+
+          // finger 2 goes down on another piece: it cancels the selection and
+          // stays down
+          final finger2 = await tester.startGesture(squareOffset(tester, Square.d2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+
+          // the gesture owner (finger 1) lifts, but finger 2 is still down
+          await finger1.up();
+          await tester.pump();
+
+          // a fresh finger 3 on a piece must still be ignored, because a finger
+          // remains down on the board
+          final finger3 = await tester.startGesture(squareOffset(tester, Square.e2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isFalse);
+
+          await finger3.up();
+          await finger2.up();
+          await tester.pump();
+
+          // all fingers released: the board can be interacted with again
+          await tester.tapAt(squareOffset(tester, Square.e2));
+          await tester.pump();
+          expect(_isSelectedHighlight(tester, Square.e2), isTrue);
+        });
+      },
+    );
+
     testWidgets('while dragging a piece, other pointer events will cancel', (
       WidgetTester tester,
     ) async {

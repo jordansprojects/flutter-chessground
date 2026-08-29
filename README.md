@@ -3,14 +3,18 @@
 [![package publisher](https://img.shields.io/pub/publisher/chessground.svg)](https://pub.dev/packages/chessground/publisher)
 [![Discord](https://img.shields.io/discord/280713822073913354?label=Discord&logo=discord&style=flat)](https://discord.com/channels/280713822073913354/807722604478988348)
 
-Chessground is a chessboard package developed for lichess.org. It doesn't handle
-chess logic so you can use it with different chess variants.
+Chessground is a chessboard package developed for the lichess.org [mobile app](
+https://github.com/lichess-org/mobile).
 
 ## Features
 
+- Fast: board is rendered with a `CustomPainter` that is driven by a controller
+so that it can be updated without rebuilding the entire widget tree.
 - pieces animations: moving and fading away
 - board highlights: last move, piece destinations
 - move piece by tap or drag and drop
+    - a tap-to-move can be committed either on pointer release or on a
+      second touch on the destination square
 - premoves
 - displays a shadow under dragged piece to indicate the drop square target
 - board themes
@@ -20,6 +24,8 @@ chess logic so you can use it with different chess variants.
 - move annotations
 - opponent's pieces can be displayed upside down
 - create positions with a board editor
+- no chess logic: this package is only for rendering and interacting with a
+  chessboard. Use a separate chess library to handle the game rules.
 
 ## Getting started
 
