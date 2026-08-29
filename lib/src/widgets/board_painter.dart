@@ -302,7 +302,6 @@ class PiecesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (blindfoldMode) return;
 
-	
     final game = gameNotifier.value;
     final pieces = piecesNotifier.value;
     final translatingPieces = translatingPiecesNotifier.value;
@@ -311,20 +310,11 @@ class PiecesPainter extends CustomPainter {
     final sideToMove = game?.sideToMove;
     final paint = Paint()..filterQuality = FilterQuality.medium;
 
+    final piecesToPaint = ( enable3dAssets == false) ? pieces.entries : // If using 2D Assets , leave piece entries as they are
+     // If using 3D assets, we must paint pieces in a particular order so that they overlap properly to give the illusion of a 3D board
+    (orientation == Side.white) ? (pieces.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) :  // If side is white, sort in ascending order
+    (pieces.entries.toList()..sort((a, b) => a.key.compareTo(b.key))); // If side is black, sort in descending order
 
-
-    final piecesToPaint = ( enable3dAssets == false) ? pieces.entries : (orientation == Side.white) ? (pieces.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) : 
-	(pieces.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
-
-
-    if(enable3dAssets){
-    debugPrint("3d assets enabled");  
-     
-//     pieces.entries = (orientation == Side.white) ? (pieces.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) : 
-//	(pieces.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
-     }
-     
-  
     for (final entry in piecesToPaint ) {
       final square = entry.key;
       if (translatingPieces.containsKey(square) ||
@@ -546,11 +536,17 @@ class TranslatingPiecesPainter extends CustomPainter {
       final dy = (toSquare.rank - fromSquare.rank).toDouble() * orientationFactor;
 
       final toRect = _squareRect(toSquare, squareSize, orientation);
+      
+      final width = (enable3dAssets)? squareSize*_3dScaleFactor : squareSize;
+      final height = (enable3dAssets)? (width/image.width.toDouble()) * image.height.toDouble() : squareSize; 
+      
+      
+      //TODO FIX MOVEMENT TO LOOK NICER
       final dst = Rect.fromLTWH(
-        toRect.left + dx * squareSize * (1.0 - t),
-        toRect.top + dy * squareSize * (1.0 - t),
-        squareSize,
-        squareSize,
+       toRect.left + dx * squareSize * (1.0 - t),
+       toRect.top + dy * squareSize * (1.0 - t),
+       width,
+       height,
       );
       final src = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
 
@@ -594,6 +590,7 @@ class DragPiecePainter extends CustomPainter {
     required this.feedbackOffset,
     required this.upsideDown,
     required this.positionNotifier,
+//    required this.enable3dAssets, //TODO: figure out how to pass to this one
   }) : super(repaint: positionNotifier);
 
   /// The image of the dragged piece, or null if not yet loaded.
@@ -697,21 +694,20 @@ Rect _squareRect(Square square, double squareSize, Side orientation) {
 Rect _oblongRect(Square square, double squareSize, Side orientation, double imageWidth, double imageHeight){
 
 	final x = orientation == Side.black ? 7 - square.file : square.file;
-  	final y = orientation == Side.black ? square.rank : 7 - square.rank;
+ final y = orientation == Side.black ? square.rank : 7 - square.rank;
 
-	final scaleFactor = 1.4; 	
-	final width  = squareSize*scaleFactor;
+// TODO: Possibly cache the width and height instead of calculating it over and over
+	final width  = squareSize*_3dScaleFactor;
 	final height = (width/imageWidth) * imageHeight;	
 
-	final yOffset = (squareSize - height) / scaleFactor; 
-	final xOffset = (squareSize - width) / scaleFactor;
+	final yOffset = (squareSize - height) / _3dScaleFactor; 
+	final xOffset = (squareSize - width) / _3dScaleFactor;
 	
 	final double left = x * squareSize + (squareSize - width ) / 2;
 	final double top = (y + 1 ) * squareSize - height;
 
   	return Rect.fromLTWH(left,top , width, height);
 }
-
 
 bool _isUpsideDown(
   Side pieceColor, {
@@ -724,4 +720,7 @@ bool _isUpsideDown(
   PieceOrientationBehavior.sideToPlay => sideToMove == orientation.opposite,
 };
 
+/// Scale 3D Images to appropriate width relative to board square 
+///  to give a convincing appearance of a 3d piece placed on a flat board
+final double _3dScaleFactor = 1.4;
 

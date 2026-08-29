@@ -1150,6 +1150,7 @@ class _DragAvatar {
                   feedbackOffset: feedbackOffset,
                   upsideDown: upsideDown,
                   positionNotifier: _positionNotifier,
+                  // enable3dAssets:widget.settings.enable3dAssets, //TODO figure out whatever tf is going wrong here
                 ),
               ),
             ),
