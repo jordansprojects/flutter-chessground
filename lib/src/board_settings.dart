@@ -224,6 +224,7 @@ class ChessboardSettings {
     return other is ChessboardSettings &&
         other.colorScheme == colorScheme &&
         other.pieceAssets == pieceAssets &&
+        other.enable3dAssets == enable3dAssets &&
         other.border == border &&
         other.borderRadius == borderRadius &&
         other.boxShadow == boxShadow &&
@@ -253,6 +254,7 @@ class ChessboardSettings {
   int get hashCode => Object.hashAll([
     colorScheme,
     pieceAssets,
+    enable3dAssets,
     border,
     borderRadius,
     boxShadow,
@@ -283,6 +285,7 @@ class ChessboardSettings {
     double? brightness,
     double? hue,
     PieceAssets? pieceAssets,
+    bool? enable3dAssets,
     BoardBorder? border,
     BorderRadiusGeometry? borderRadius,
     List<BoxShadow>? boxShadow,
@@ -310,6 +313,7 @@ class ChessboardSettings {
       brightness: brightness ?? this.brightness,
       hue: hue ?? this.hue,
       pieceAssets: pieceAssets ?? this.pieceAssets,
+      enable3dAssets: enable3dAssets ?? this.enable3dAssets,
       border: border ?? this.border,
       borderRadius: borderRadius ?? this.borderRadius,
       boxShadow: boxShadow ?? this.boxShadow,
@@ -438,7 +442,7 @@ class StaticChessboardSettings {
     return StaticChessboardSettings(
       colorScheme: colorScheme ?? this.colorScheme,
       pieceAssets: pieceAssets ?? this.pieceAssets,
-      enable3dAssets: enable3dAssets ?? this.enable3dAssets,
+      enable3dAssets: enable3dAssets ?? false,
       border: border ?? this.border,
       borderRadius: borderRadius ?? this.borderRadius,
       boxShadow: boxShadow ?? this.boxShadow,

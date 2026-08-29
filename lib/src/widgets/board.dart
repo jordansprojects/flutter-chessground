@@ -185,6 +185,7 @@ class _BoardState extends State<Chessboard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final settings = widget.settings;
+    debugPrint("widget.settings.enable3dAssets = " + settings.enable3dAssets.toString());
     final colorScheme = settings.colorScheme;
     final shapes = {...widget.shapes, ..._controller.drawnShapes};
     final annotations = widget.annotations;
