@@ -264,7 +264,7 @@ class PiecesPainter extends CustomPainter {
   /// The assets used to render each piece kind.
   final PieceAssets pieceAssets;
 
-  /// Scale piece images based on usage of 3d piece and board assets
+  /// Whether to display more rectangular piece images based on whether a "3d" asset is selected
   final bool enable3dAssets;
 
   /// The size of a single square in logical pixels.
@@ -397,8 +397,7 @@ class FadingPiecesPainter extends CustomPainter {
   /// The assets used to render each piece kind.
   final PieceAssets pieceAssets;
 
-  // Scale piece images based on whether 3d piece or board assets are used
-  // to give the illusion of 3d board and pieces
+  /// Whether to display more rectangular piece images based on whether a "3d" asset is selected
   final bool enable3dAssets;
 
   /// Whether pieces should be hidden (blindfold mode).
@@ -499,7 +498,7 @@ class TranslatingPiecesPainter extends CustomPainter {
   /// The assets used to render each piece kind.
   final PieceAssets pieceAssets;
 
-  //TODO put description here
+  /// Whether to display more rectangular piece images based on whether a "3d" asset is selected
   final bool enable3dAssets;
 
   /// Whether pieces should be hidden (blindfold mode).
@@ -590,7 +589,7 @@ class DragPiecePainter extends CustomPainter {
     required this.feedbackOffset,
     required this.upsideDown,
     required this.positionNotifier,
-//    required this.enable3dAssets, //TODO: figure out how to pass to this one
+    required this.enable3dAssets,
   }) : super(repaint: positionNotifier);
 
   /// The image of the dragged piece, or null if not yet loaded.
@@ -607,23 +606,27 @@ class DragPiecePainter extends CustomPainter {
 
   /// The current pointer position the dragged piece follows.
   final ValueNotifier<Offset> positionNotifier;
+  
+  /// Whether to display more rectangular piece images based on whether a "3d" asset is selected
+  final bool enable3dAssets;
+
 
   @override
   void paint(Canvas canvas, Size size) {
     final img = image;
     if (img == null) return;
     
-   // final feedbackWidth = (enable3dAssets)? feedbackSize*_3dScaleFactor : feedbackSize;
-   // final feedbackHeight = (enable3dAssets)? (feedbackWidth/img.width.toDouble()) * img.height.toDouble() : feedbackSize;
+   final feedbackWidth = (enable3dAssets)? feedbackSize*_3dScaleFactor : feedbackSize;
+   final feedbackHeight = (enable3dAssets)? (feedbackWidth/img.width.toDouble()) * img.height.toDouble() : feedbackSize;
+   
+   //TODO need to figure out good feedback offset adjustment for when pieces are 3d 
     
     final pos = positionNotifier.value;
     final dst = Rect.fromLTWH(
       pos.dx + feedbackOffset.dx,
       pos.dy + feedbackOffset.dy,
-      feedbackSize,
-      feedbackSize
-    //  feedbackWidth,
-    //  feedbackHeight,
+      feedbackWidth,
+      feedbackHeight
     );
     final src = Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble());
     final paint = Paint()..filterQuality = FilterQuality.medium;

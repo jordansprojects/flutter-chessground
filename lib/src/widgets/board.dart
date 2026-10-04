@@ -185,7 +185,6 @@ class _BoardState extends State<Chessboard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final settings = widget.settings;
-    debugPrint("widget.settings.enable3dAssets = " + settings.enable3dAssets.toString());
     final colorScheme = settings.colorScheme;
     final shapes = {...widget.shapes, ..._controller.drawnShapes};
     final annotations = widget.annotations;
@@ -969,6 +968,7 @@ class _BoardState extends State<Chessboard> with TickerProviderStateMixin {
         upsideDown: upsideDown,
         targetKind: targetKind,
         squareSize: widget.squareSize,
+        enable3dAssets: widget.settings.enable3dAssets,
       );
     }
   }
@@ -1014,6 +1014,7 @@ class _BoardState extends State<Chessboard> with TickerProviderStateMixin {
       upsideDown: false,
       targetKind: targetKind,
       squareSize: widget.squareSize,
+      enable3dAssets: widget.settings.enable3dAssets,
     );
   }
 
@@ -1136,6 +1137,8 @@ class _DragAvatar {
     required bool upsideDown,
     required DragTargetKind targetKind,
     required double squareSize,
+    required bool enable3dAssets,
+    
   }) : _positionNotifier = ValueNotifier<Offset>(initialPosition),
        _squareTargetNotifier = ValueNotifier<Offset?>(initialTargetPosition) {
     // Only the paint phase runs on each pointer move.
@@ -1150,7 +1153,7 @@ class _DragAvatar {
                   feedbackOffset: feedbackOffset,
                   upsideDown: upsideDown,
                   positionNotifier: _positionNotifier,
-                  // enable3dAssets:widget.settings.enable3dAssets, //TODO figure out whatever tf is going wrong here
+                  enable3dAssets: enable3dAssets,
                 ),
               ),
             ),
